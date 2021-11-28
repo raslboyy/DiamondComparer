@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <iostream>
 
 DataFrame::DataFrame(std::string path) {
   std::ifstream csv(path);
@@ -17,7 +18,8 @@ DataFrame::DataFrame(std::string path) {
     std::stringstream s(line);
     while (getline(s, word, ','))
       _columns.emplace_back(word);
-    _columns.back().erase(_columns.back().find('\r'));
+    if (_columns.back().find('\r') != std::string::npos)
+      _columns.back().erase(_columns.back().find('\r'));
   }
 
   while (getline(csv, line)) {
@@ -43,15 +45,19 @@ void DataFrame::Save(std::string path, KMeans& k_means) {
     csv << column << ',';
   csv << '\n';
 
-  for (int i = 0; i < k_means._nClusters; i++) {
-    csv << "Коробка №" << std::to_string(i + 1) << '\n';
-    for (auto &c: k_means._clusters)
-      for (auto &k : c.points) {
-        for (auto &gf: k.second.point)
-          csv << gf << ',';
-        csv << '\n';
-      }
+  int count = 0;
+  int i = 0;
+  for (auto &c: k_means._clusters) {
+    csv << "Коробка №" << std::to_string( i+ 1) << '\n';
+    for (auto &k: c.points) {
+      for (auto &gf: k.second.point)
+        csv << gf << ',';
+      csv << '\n';
+      count++;
+    }
+    i++;
   }
+  std::cout << count << "\n";
 
   for (const auto &row: _rows) {
     for (const auto &element: row)

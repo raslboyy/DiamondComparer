@@ -21,7 +21,7 @@ class KMeans {
   std::vector<int> _affiliation;
   int _maxIterations = 100;
   int _nClusters = 10;
-  double eStop = 1e-4;
+  double eStop = 1e4;
   std::string _initializationMethod = "random";
 
   void Initialization(const DataFrame &data);

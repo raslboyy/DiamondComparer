@@ -11,8 +11,10 @@ void KMeans::Fit(const DataFrame &data) {
   int per = n / _nClusters;
   _affiliation.clear();
   _affiliation.assign(n, -1);
-  double e = 1e9;
-  for (int nIter = 0; nIter < _maxIterations && e > eStop; nIter++) {
+  double e1 = 1e9;
+  double e2 = 0;
+//  && std::abs(e1 - e2) > eStop
+  for (int nIter = 0; nIter < _maxIterations; nIter++) {
     CalculatePriority(data);
 
     for (int i = 0; i < n; i++) {
@@ -24,23 +26,20 @@ void KMeans::Fit(const DataFrame &data) {
       }
       else {
         double a = std::pow(_clusters[cluster].Last().distance, 2);
-        try {
-          double b = std::pow(Distance().operator()(_clusters[cluster].center, data[point]), 2);
-          if (b < a) {
-            int clusterA = _affiliation[_clusters[cluster].Last().id];
-            int clusterB = _affiliation[point];
+        double b = std::pow(Distance().operator()(_clusters[cluster].center, data[point]), 2);
+        if (b < a) {
+          int clusterA = cluster;
+          int clusterB = _affiliation[point];
 
-            if (clusterA != -1 && clusterB != -1) {
-              auto pointA = _clusters[clusterA].Pop();
-              _clusters[clusterA].Add(data[point], point);
-              _clusters[clusterB].Pop(point);
-              _clusters[clusterB].Add(pointA.point, pointA.id);
-            }
-
+          if (clusterB != -1) {
+            auto pointA = _clusters[clusterA].Pop();
+            _clusters[clusterA].Add(data[point], point);
+            _clusters[clusterB].Pop(point);
+            _clusters[clusterB].Add(pointA.point, pointA.id);
+            _affiliation[point] = clusterA;
+            _affiliation[pointA.id] = clusterB;
           }
-        }
-        catch (...) {
-          std::cout << "fdf" << std::endl;
+
         }
 
 
@@ -53,19 +52,9 @@ void KMeans::Fit(const DataFrame &data) {
     }
     std::cout << std::endl;
 
-    e = E();
+    e2 = e1;
+    e1 = E();
   }
-
-//  for (int i = 0; i < _nClusters; i++) {
-//    for (auto &c: _clusters)
-//      for (auto &k : c.points) {
-//        for (auto &gf: k.second.point)
-//          std::cout << gf << ' ';
-//        std::cout << std::endl;
-//      }
-//    std::cout << "------------------------------------------------\n";
-//  }
-
 }
 
 void KMeans::Initialization(const DataFrame &data) {
@@ -78,7 +67,7 @@ void KMeans::Initialization(const DataFrame &data) {
 void KMeans::RandomInitialization(const DataFrame &data) {
   std::random_device rd;
   std::mt19937 mt(rd());
-  std::uniform_int_distribution<size_t> dist(0, data.size());
+  std::uniform_int_distribution<size_t> dist(0, data.size() - 1);
 
   std::set<int> s;
   while (s.size() < _nClusters)
