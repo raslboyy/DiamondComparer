@@ -1,4 +1,5 @@
 #include "DataFrame.h"
+#include "../algo/KMeans.h"
 
 #include <fstream>
 #include <sstream>
@@ -35,12 +36,22 @@ DataFrame::DataFrame(std::string path) {
   }
 }
 
-void DataFrame::Save(std::string path) {
+void DataFrame::Save(std::string path, KMeans& k_means) {
   std::ofstream csv(path);
 
   for (const auto &column: _columns)
     csv << column << ',';
   csv << '\n';
+
+  for (int i = 0; i < k_means._nClusters; i++) {
+    csv << "Коробка №" << std::to_string(i + 1) << '\n';
+    for (auto &c: k_means._clusters)
+      for (auto &k : c.points) {
+        for (auto &gf: k.second.point)
+          csv << gf << ',';
+        csv << '\n';
+      }
+  }
 
   for (const auto &row: _rows) {
     for (const auto &element: row)
@@ -64,9 +75,15 @@ int DataFrame::FindColumn(const std::string &column) {
   return at;
 }
 
-std::vector<int> DataFrame::operator[](size_t i) {
+std::vector<int> DataFrame::operator[](size_t i) const {
   std::vector<int> row;
-  for (auto element : _rows[i])
-    row.emplace_back(std::get<int>(element));
+  for (auto element : _rows[i]) {
+    try{
+      row.emplace_back(std::get<int>(element));
+    }
+    catch (std::exception& e) {
+      row.emplace_back(std::stoi(std::get<std::string>(element)));
+    }
+  }
   return row;
 }

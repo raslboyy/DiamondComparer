@@ -5,6 +5,8 @@
 #include <variant>
 #include <memory>
 
+class KMeans;
+
 class DataFrame {
  public:
   explicit DataFrame(std::string path);
@@ -16,9 +18,10 @@ class DataFrame {
   template<class... Ts>
   std::shared_ptr<DataFrame> DropColumns(const std::string& column, const Ts &... args);
 
-  void Save(std::string path);
+  void Save(std::string path, KMeans& k_means);
 
-  std::vector<int> operator[](size_t i);
+  std::vector<int> operator[](size_t i) const;
+  [[nodiscard]] size_t size() const { return _rows.size(); }
  private:
   std::vector<std::string> _columns;
   std::vector<std::vector<std::variant<std::string, int>>> _rows;
